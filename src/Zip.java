@@ -1,10 +1,6 @@
 
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Enumeration;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedOutputStream;
@@ -18,6 +14,12 @@ import java.util.zip.ZipOutputStream;
 
 public class Zip {
 
+    /**
+     * 解压apk文件
+     *
+     * @param zip 需要解压的文件
+     * @param dir 解压的目标文件
+     */
     public static void unZip(File zip, File dir) {
         try {
             dir.delete();
@@ -26,26 +28,27 @@ public class Zip {
             while (entries.hasMoreElements()) {
                 ZipEntry zipEntry = entries.nextElement();
                 String name = zipEntry.getName();
-                if (name.equals("META-INF/CERT.RSA") || name.equals("META-INF/CERT.SF") || name
-                        .equals("META-INF/MANIFEST.MF")) {
+                if ("META-INF/CERT.RSA".equals(name) || "META-INF/CERT.SF".equals(name)
+                        || "META-INF/MANIFEST.MF".equals(name)) {
                     continue;
                 }
                 if (!zipEntry.isDirectory()) {
                     File file = new File(dir, name);
-                    if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
-                    FileOutputStream fos = new FileOutputStream(file);
-                    InputStream is = zipFile.getInputStream(zipEntry);
+                    if (!file.getParentFile().exists()) {
+                        file.getParentFile().mkdirs();
+                    }
+                    FileOutputStream fileOutputStream = new FileOutputStream(file);
+                    InputStream inputStream = zipFile.getInputStream(zipEntry);
                     byte[] buffer = new byte[1024];
                     int len;
-                    while ((len = is.read(buffer)) != -1) {
-                        fos.write(buffer, 0, len);
+                    while ((len = inputStream.read(buffer)) != -1) {
+                        fileOutputStream.write(buffer, 0, len);
                     }
-                    is.close();
-                    fos.close();
+                    inputStream.close();
+                    fileOutputStream.close();
                 }
             }
-            zipFile.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -53,8 +56,7 @@ public class Zip {
     public static void zip(File dir, File zip) throws Exception {
         zip.delete();
         // 对输出文件做CRC32校验
-        CheckedOutputStream cos = new CheckedOutputStream(new FileOutputStream(
-                zip), new CRC32());
+        CheckedOutputStream cos = new CheckedOutputStream(new FileOutputStream(zip), new CRC32());
         ZipOutputStream zos = new ZipOutputStream(cos);
         compress(dir, zos, "");
         zos.flush();

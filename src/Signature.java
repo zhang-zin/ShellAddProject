@@ -6,14 +6,13 @@ import java.io.InputStream;
 
 /**
  * Created by LK on 2017/9/4.
- * 
  */
 
 public class Signature {
     public static void signature(File unsignedApk, File signedApk) throws InterruptedException, IOException {
-        String cmd[] = {"cmd.exe", "/C ","jarsigner",  "-sigalg", "MD5withRSA",
+        String cmd[] = {"cmd.exe", "/C ", "jarsigner", "-sigalg", "MD5withRSA",
                 "-digestalg", "SHA1",
-                "-keystore", "C:/Users/allen/.android/debug.keystore",
+                "-keystore", "C:/Users/79810/.android/debug.keystore",
                 "-storepass", "android",
                 "-keypass", "android",
                 "-signedjar", signedApk.getAbsolutePath(),
@@ -32,16 +31,16 @@ public class Signature {
             e.printStackTrace();
             throw e;
         }
-        System.out.println("process.exitValue() " + process.exitValue() );
+        System.out.println("process.exitValue() " + process.exitValue());
         if (process.exitValue() != 0) {
-        	InputStream inputStream = process.getErrorStream();
-        	int len;
-        	byte[] buffer = new byte[2048];
-        	ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        	while((len=inputStream.read(buffer)) != -1){
-        		bos.write(buffer,0,len);
-        	}
-        	System.out.println(new String(bos.toByteArray(),"GBK"));
+            InputStream inputStream = process.getErrorStream();
+            int len;
+            byte[] buffer = new byte[2048];
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            while ((len = inputStream.read(buffer)) != -1) {
+                bos.write(buffer, 0, len);
+            }
+            System.out.println(new String(bos.toByteArray(), "GBK"));
             throw new RuntimeException("Ç©ÃûÖ´ÐÐÊ§°Ü");
         }
         System.out.println("finish signed");

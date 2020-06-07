@@ -22,79 +22,70 @@ public class AES {
 
     private static final String algorithmStr = "AES/ECB/PKCS5Padding";
 
+    /**
+     * 加密
+     */
     private static Cipher encryptCipher;
+    /**
+     * 解密
+     */
     private static Cipher decryptCipher;
 
+    /**
+     * AES加密初始化
+     *
+     * @param password 密钥
+     */
     public static void init(String password) {
         try {
-        	// 生成一个实现指定转换的 Cipher 对象。
             encryptCipher = Cipher.getInstance(algorithmStr);
-            decryptCipher = Cipher.getInstance(algorithmStr);// algorithmStr
-            byte[] keyStr = password.getBytes();
-            SecretKeySpec key = new SecretKeySpec(keyStr, "AES");
-            encryptCipher.init(Cipher.ENCRYPT_MODE, key);
-            decryptCipher.init(Cipher.DECRYPT_MODE, key);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
+            decryptCipher = Cipher.getInstance(algorithmStr);
+            byte[] key = password.getBytes();
+            SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+            encryptCipher.init(Cipher.ENCRYPT_MODE, keySpec);
+            decryptCipher.init(Cipher.DECRYPT_MODE, keySpec);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
             e.printStackTrace();
         }
     }
 
     /**
-    *
-    * @param srcAPKfile  源文件所在位置
-    * @param dstApkFile  目标文件
-    * @return             加密后的新dex 文件
-    * @throws Exception
-    */
+     * @param srcAPKfile 源文件所在位置
+     * @param dstApkFile 目标文件
+     * @return 加密后的新dex 文件
+     */
     public static File encryptAPKFile(File srcAPKfile, File dstApkFile) throws Exception {
         if (srcAPKfile == null) {
-        	System.out.println("encryptAPKFile :srcAPKfile null");
+            System.out.println("encryptAPKFile :srcAPKfile null");
             return null;
         }
-//        File disFile = new File(srcAPKfile.getAbsolutePath() + "unzip");
-//		Zip.unZip(srcAPKfile, disFile);
         Zip.unZip(srcAPKfile, dstApkFile);
         //获得所有的dex （需要处理分包情况）
-        File[] dexFiles = dstApkFile.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File file, String s) {
-                return s.endsWith(".dex");
-            }
-        });
-
+        File[] dexFiles = dstApkFile.listFiles((file, s) -> s.endsWith(".dex"));
         File mainDexFile = null;
-        byte[] mainDexData = null;
 
-        for (File dexFile: dexFiles) {
-        	//读数据
+        for (File dexFile : dexFiles) {
+            // 读数据
             byte[] buffer = Utils.getBytes(dexFile);
-            //加密
-            byte[] encryptBytes = AES.encrypt(buffer);
-
+            // 加密
+            byte[] encrypt = AES.encrypt(buffer);
             if (dexFile.getName().endsWith("classes.dex")) {
-                mainDexData = encryptBytes;
                 mainDexFile = dexFile;
             }
-           //写数据  替换原来的数据
-            FileOutputStream fos = new FileOutputStream(dexFile);
-            fos.write(encryptBytes);
-            fos.flush();
-            fos.close();
+            // 写数据
+            FileOutputStream fileOutputStream = new FileOutputStream(dexFile);
+            fileOutputStream.write(encrypt);
+            fileOutputStream.flush();
+            fileOutputStream.close();
         }
+
         return mainDexFile;
     }
 
     public static byte[] encrypt(byte[] content) {
         try {
-            byte[] result = encryptCipher.doFinal(content);
-            return result;
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
+            return encryptCipher.doFinal(content);
+        } catch (IllegalBlockSizeException | BadPaddingException e) {
             e.printStackTrace();
         }
         return null;
@@ -140,16 +131,16 @@ public class AES {
         File zip = new File("/Users/xiang/develop/source.apk");
         String absolutePath = zip.getAbsolutePath();
         File dir = new File(absolutePath.substring(0, absolutePath.lastIndexOf(".")));
-        Zip.unZip(zip,dir);
+        Zip.unZip(zip, dir);
 
         File zip2 = new File("/Users/xiang/develop/app-debug2.apk");
-        Zip.zip(dir,zip2);
+        Zip.zip(dir, zip2);
 
         String[] argv = {
-                "jarsigner","-verbose", "-sigalg", "MD5withRSA",
+                "jarsigner", "-verbose", "-sigalg", "MD5withRSA",
                 "-digestalg", "SHA1",
                 "-keystore", "/Users/xiang/develop/debug.keystore",
-                "-storepass","android",
+                "-storepass", "android",
                 "-keypass", "android",
                 "-signedjar", "/Users/xiang/develop/app-debug2-sign.apk",
                 "/Users/xiang/develop/app-debug2.apk",
